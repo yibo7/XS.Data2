@@ -352,9 +352,44 @@ namespace XS.Data2.Dapper
         /// <returns></returns>
         public List<T> GetList(string where)
         {
+            return GetList(where,0,"");
+            //using (var connection = GetConn)
+            //{
+            //    return connection.Query<T>(string.Format("select * from {0} where {1}", TableName, where)).ToList();
+            //}
+        }
+        public List<T> GetList(string where, int top)
+        {
+            return GetList(where, top, "");
+            //using (var connection = GetConn)
+            //{
+            //    return connection.Query<T>(string.Format("select * from {0} where {1}", TableName, where)).ToList();
+            //}
+        }
+
+        public List<T> GetList(string where,int top,string orderby)
+        {
+            StringBuilder sql = new StringBuilder();
+            sql.Append($"select * from {TableName}");
+            if (!string.IsNullOrEmpty(where))
+            {
+                sql.Append($" where {where}");
+            }
+
+            if (!string.IsNullOrEmpty(orderby))
+            {
+                sql.Append($" ORDER BY {orderby}");
+            }
+
+            if (top>0)
+            {
+                sql.Append($" LIMIT {top}");
+            }
+             
+
             using (var connection = GetConn)
             {
-                return connection.Query<T>(string.Format("select * from {0} where {1}", TableName, where)).ToList();
+                return connection.Query<T>(sql.ToString()).ToList();
             }
         }
 

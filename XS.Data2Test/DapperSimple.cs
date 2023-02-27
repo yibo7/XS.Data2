@@ -1,9 +1,6 @@
 ﻿using System; 
 using System.Data; 
-using System.Text;
-using Dapper;
-using Dapper.Contrib.Extensions; 
-using XS.Data2;
+using System.Text; 
 using XS.Data2Test.DapperExample;
 
 namespace XS.Data2Test
