@@ -345,6 +345,18 @@ namespace XS.Data2.Dapper
                 return connection.QueryFirstOrDefault<T>(string.Format("select * from {0} where {1}", TableName, where));
             }
         }
+        public T GetEntityByWhere(string where,string orderby)
+        {
+            using (var connection = GetConn)
+            {
+                string str_orderby = string.Empty;
+                if (!string.IsNullOrEmpty(orderby))
+                {
+                    str_orderby = $" ORDER BY {orderby}";
+                }
+                return connection.QueryFirstOrDefault<T>($"select * from {TableName} where {where}{str_orderby}");
+            }
+        }
         /// <summary>
         /// 查询某条件下的所有记录
         /// </summary>
