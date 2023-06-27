@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -214,6 +215,19 @@ namespace XS.Data2.Dapper
                 string sql = string.Format("delete from {0} where Id={1} ", TableName, Id);
                 connection.ExecuteScalar(sql, Trans);
             
+        }
+        public void DeleteWhere(string where, IDbTransaction Trans, IDbConnection connection)
+        {
+            string sql = $"delete from {TableName} where {where} ";
+            connection.ExecuteScalar(sql, Trans);
+
+        }
+        public void DeleteWhere(string where)
+        {        
+            using (var connection = GetConn)
+            {
+                DeleteWhere(where, null, connection);
+            }
         }
         /// <summary>
         /// 删除一个实例
