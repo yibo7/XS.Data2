@@ -136,7 +136,7 @@ namespace XS.Data2.Dapper
         /// 添加一条数据
         /// </summary>
         /// <param name="model">数据实例</param>
-        /// <returns></returns>
+        /// <returns>只有Id为自动增长类型时返回一个整数Id</returns>
         public long Add(T model)
         {
             using (var connection = GetConn)
@@ -149,7 +149,7 @@ namespace XS.Data2.Dapper
         /// </summary>
         /// <param name="model">数据实例</param>
         /// <param name="Trans">事务</param>
-        /// <returns></returns>
+        /// <returns>只有Id为自动增长类型时返回一个整数Id</returns>
         public long Add(T model, IDbTransaction Trans, IDbConnection connection)
         {
             
@@ -186,7 +186,7 @@ namespace XS.Data2.Dapper
         /// </summary>
         /// <param name="Id">主键id的值</param>
         /// <returns></returns>
-        public T GetEntity(int Id)
+        public T GetEntity(long Id)
         {
             using (var connection = GetConn)
             {
