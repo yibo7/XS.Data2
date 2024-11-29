@@ -90,16 +90,20 @@ namespace XS.Data2.LiteDBBase
             }
                
         }
-
-        public bool Exists(BsonValue id)
+        public bool Exists(string id)
+        {
+            return Exists(new ObjectId(id));
+        }
+        public bool Exists(ObjectId id)
         {
             using (var db = GetDb)
             {
                 var collection = db.GetCollection<T>(TableName);
-                return collection.Exists(id);
+                // 使用表达式检查是否存在
+                return collection.Exists(x => x.Id == id);
             }
         }
-        public bool Exists(string query)
+        public bool ExistsWhere(string query)
         {
             using (var db = GetDb)
             {
@@ -117,7 +121,7 @@ namespace XS.Data2.LiteDBBase
                 return collection.Update(model);
             }
         }
-        public T GetEntity(BsonValue id)
+        public T GetEntity(ObjectId id)
         {
             using (var db = GetDb)
             {
@@ -125,7 +129,16 @@ namespace XS.Data2.LiteDBBase
                 return collection.FindById(id);
             }
         }
-        public void Delete(BsonValue id)
+
+        public T GetEntity(string id)
+        {
+            return GetEntity(new ObjectId(id));
+        }
+        public void Delete(string id)
+        {
+             Delete(new ObjectId(id));
+        }
+        public void Delete(ObjectId id)
         {
             using (var db = GetDb)
             {
