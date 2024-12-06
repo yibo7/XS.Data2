@@ -103,6 +103,19 @@ namespace XS.Data2.LiteDBBase
                 return collection.Exists(x => x.Id == id);
             }
         }
+        /// <summary>
+        /// 是否存在某记录
+        /// </summary>
+        /// <param name="query">
+        /// var query = "Name == 'John'";
+        /// query = "Age > 30" 
+        /// quety = "Age != 30"
+        /// query = "Age > 30 && Age < 40"
+        /// query = "Name.contains('John')";
+        /// query = "Name.startswith('J')";
+        /// query = "Name.endswith('n')";
+        /// </param>
+        /// <returns></returns>
         public bool ExistsWhere(string query)
         {
             using (var db = GetDb)
@@ -152,6 +165,27 @@ namespace XS.Data2.LiteDBBase
             {
                 var collection = db.GetCollection<T>(TableName);
                 collection.DeleteMany(_ => true); // 删除所有文档
+            }
+        }
+        /// <summary>
+        /// 简单查询
+        /// </summary>
+        /// <param name="swhere"></param>
+        /// var query = "Name = 'John'";
+        /// query = "Age > 30" 
+        /// quety = "Age != 30"
+        /// query = "Age > 30 && Age < 40"
+        /// query = "Name.contains('John')";
+        /// query = "Name.startswith('J')";
+        /// query = "Name.endswith('n')";
+        /// <returns></returns>
+        public List<T> Find(string query)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                // 使用 ToList() 将查询结果转换为 List<T>
+                return collection.Find(query).ToList();
             }
         }
         /// <summary>
