@@ -126,6 +126,27 @@ namespace XS.Data2.LiteDBBase
             }
         }
 
+        /// <summary>
+        /// 删除符合条件的记录
+        /// </summary>
+        /// var query = "Name == 'John'";
+        /// query = "Age > 30" 
+        /// quety = "Age != 30"
+        /// query = "Age > 30 && Age < 40"
+        /// query = "Name.contains('John')";
+        /// query = "Name.startswith('J')";
+        /// query = "Name.endswith('n')";
+        /// <returns>删除的记录数</returns>
+        public int DeleteByWhere(string sWhere)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                int deletedCount = collection.DeleteMany(sWhere);
+                return deletedCount;
+            }
+        }
+
         public bool Update(T model)
         {
             using (var db = GetDb)
@@ -178,6 +199,7 @@ namespace XS.Data2.LiteDBBase
         /// query = "Name.contains('John')";
         /// query = "Name.startswith('J')";
         /// query = "Name.endswith('n')";
+        /// $"ChatId = ObjectId('{Id}')"
         /// <returns></returns>
         public List<T> Find(string query)
         {
@@ -186,6 +208,27 @@ namespace XS.Data2.LiteDBBase
                 var collection = db.GetCollection<T>(TableName);
                 // 使用 ToList() 将查询结果转换为 List<T>
                 return collection.Find(query).ToList();
+            }
+        }
+        public List<T> FindNews(int Top=100)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                // 使用 LINQ 进行排序和限制
+                return collection.FindAll()
+                                 .OrderByDescending(x => x.Id) // 按 Id 降序排序，最新的在前面
+                                 .Take(Top) // 取前 1000 条
+                                 .ToList();
+            }
+        }
+        public List<T> FindAll()
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                // 使用 FindAll() 获取所有记录，并使用 ToList() 将结果转换为 List<T>
+                return collection.FindAll().ToList();
             }
         }
         /// <summary>

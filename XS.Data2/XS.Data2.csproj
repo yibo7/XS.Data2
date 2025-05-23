@@ -4,10 +4,11 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<VersionPrefix>1.0.4</VersionPrefix>
+	<VersionPrefix>1.0.5</VersionPrefix>
 	<AssemblyTitle>XS.Data2 DLL</AssemblyTitle>
 	<AssemblyDescription>XS.Data2帮助类库</AssemblyDescription>
 	<PackageOutputPath>D:\web\MyNugetLibs</PackageOutputPath>
+	<Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
