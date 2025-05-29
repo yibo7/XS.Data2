@@ -10,6 +10,95 @@ using System.Threading.Tasks;
 
 namespace XS.Data2.LiteDBBase
 {
+    /**  
+        
+       LiteDB BsonExpression 查询表达式示例参考：
+       
+
+       【比较操作符】
+       1. 等于：
+          查询 Name 字段等于 'John'
+          "Name = 'John'"
+
+       2. 不等于：
+          查询 Age 字段不等于 30
+          "Age != 30"
+
+       3. 大于：
+          查询 Score 大于 80
+          "Score > 80"
+
+       4. 小于：
+          查询 Age 小于 25
+          "Age < 25"
+
+       5. 大于等于：
+          查询 Height 大于等于 180
+          "Height >= 180"
+
+       6. 小于等于：
+          查询 Salary 小于等于 10000
+          "Salary <= 10000"
+
+       【逻辑操作符】
+       7. 并且（AND）：
+          查询 Age 大于 30 且小于 40
+          "Age > 30 && Age < 40"
+
+       8. 或者（OR）：
+          查询 Name 等于 'John' 或 Age 小于 25
+          "Name = 'John' || Age < 25"
+
+       9. 非（NOT）：
+          查询 IsActive 字段为 false 或不存在
+          "!IsActive"
+
+       【字符串函数】
+       10. contains()：
+           查询 Name 包含 'John'
+           "Name.contains('John')"
+
+       11. startswith()：
+           查询 Email 以 'admin' 开头
+           "Email.startswith('admin')"
+
+       12. endswith()：
+           查询 FileName 以 '.txt' 结尾
+           "FileName.endswith('.txt')"
+
+       13. length：
+           查询 Name 长度大于 5
+           "Name.length > 5"
+
+       14. lower()：
+           查询 Name 转小写后等于 'john'（忽略大小写）
+           "Name.lower() = 'john'"
+
+       15. upper()：
+           查询 Code 转大写后等于 'ABC123'
+           "Code.upper() = 'ABC123'"
+
+       【集合操作】
+       16. in：
+           查询 Category 属于 ['Book', 'Music', 'Movie']
+           "$.in(Category, ['Book', 'Music', 'Movie'])"
+
+       17. Any（数组 contains）：
+           查询 Tags 数组中有包含 'urgent' 的项
+           "Tags.Any($.contains('urgent'))"
+
+       【组合查询】
+       18. 多条件组合查询：
+           查询 Age 在 18 到 25 之间，或 Name 以 'J' 开头
+           "(Age >= 18 && Age <= 25) || Name.startswith('J')"
+
+       【嵌套数组字段】
+       19. 嵌套数组字段查询：
+           查询 Orders 数组中存在 Amount > 100 的元素
+           "Orders.Any($.Amount > 100)"
+
+       */
+
     public class LiteTableAttribute : Attribute
     {
         /// <summary>
@@ -107,7 +196,7 @@ namespace XS.Data2.LiteDBBase
         /// 是否存在某记录
         /// </summary>
         /// <param name="query">
-        /// var query = "Name == 'John'";
+        /// var query = "Name = 'John'";
         /// query = "Age > 30" 
         /// quety = "Age != 30"
         /// query = "Age > 30 && Age < 40"
@@ -129,7 +218,7 @@ namespace XS.Data2.LiteDBBase
         /// <summary>
         /// 删除符合条件的记录
         /// </summary>
-        /// var query = "Name == 'John'";
+        /// var query = "Name = 'John'";
         /// query = "Age > 30" 
         /// quety = "Age != 30"
         /// query = "Age > 30 && Age < 40"
@@ -191,15 +280,12 @@ namespace XS.Data2.LiteDBBase
         /// <summary>
         /// 简单查询
         /// </summary>
-        /// <param name="swhere"></param>
-        /// var query = "Name = 'John'";
-        /// query = "Age > 30" 
-        /// quety = "Age != 30"
-        /// query = "Age > 30 && Age < 40"
-        /// query = "Name.contains('John')";
-        /// query = "Name.startswith('J')";
-        /// query = "Name.endswith('n')";
-        /// $"ChatId = ObjectId('{Id}')"
+        /// <param name="query">支持SQL语句</param>
+        ///var query1 = @"Name = ""John""";
+        ///var query2 = @"Age > 30 AND Age < 50";
+        ///var query3 = @"Name LIKE ""%股票%""";
+        ///var query4 = @"Age < 18 OR Age > 65";
+        ///var query5 = @"NOT Name = ""Tom""";
         /// <returns></returns>
         public List<T> Find(string query)
         {
@@ -210,6 +296,64 @@ namespace XS.Data2.LiteDBBase
                 return collection.Find(query).ToList();
             }
         }
+
+        /// <summary>
+        /// 简单查询（支持限制条数和排序）
+        /// 调用示例：
+        ///var query1 = @"Name = ""John""";
+        ///var query2 = @"Age > 30 AND Age < 50";
+        ///var query3 = @"Name LIKE ""%股票%""";
+        ///var query4 = @"Age < 18 OR Age > 65";
+        ///var query5 = @"NOT Name = ""Tom""";
+        /// </summary>
+        /// <param name="query">支持SQL语句</param>
+        /// <param name="limit">最多返回的记录条数，null 表示不限制</param>
+        /// <param name="orderBy">排序字段名，例如 "Age"</param>
+        /// <param name="descending">是否降序</param>
+        /// <returns>符合条件的记录列表</returns>
+        public List<T> Find(string? query = null, int? limit = null, string? orderBy = null, bool descending = false)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+
+                ILiteQueryable<T> queryable;
+
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    // 查询全部
+                    queryable = collection.Query();
+                }
+                else
+                {
+                    
+                    var expr = BsonExpression.Create(query);
+                    queryable = collection.Query().Where(expr);
+                }
+
+                if (!string.IsNullOrEmpty(orderBy))
+                {
+                    queryable = descending
+                        ? queryable.OrderByDescending(orderBy)
+                        : queryable.OrderBy(orderBy);
+                }
+
+                if (limit.HasValue)
+                {
+                    var limitedResult = queryable.Limit(limit.Value);
+                    return limitedResult.ToList();
+                }
+                else
+                {
+                    return queryable.ToList();
+                }
+            }
+        }
+
+
+
+
+
         public List<T> FindNews(int Top=100)
         {
             using (var db = GetDb)
