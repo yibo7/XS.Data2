@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 namespace XS.Data2.LiteDBBase
 {
     /**  
-        
+
        LiteDB BsonExpression 查询表达式示例参考：
-       
+
 
        【比较操作符】
        1. 等于：
@@ -99,86 +99,38 @@ namespace XS.Data2.LiteDBBase
 
        */
 
-    public class LiteTableAttribute : Attribute
+
+    abstract public class LiteBaseObjectId<T> : BllLiteBase<T> where T : LiteModelBase
     {
-        /// <summary>
-        /// 可以在实体类里通过属性设置表的名称
-        /// </summary>
-        /// <param name="tableName">数据库中表的名称</param>
-        public LiteTableAttribute(string tableName)
-        {
-            Name = tableName;
-        }
-
-        /// <summary>
-        /// The name of the table in the database
-        /// </summary>
-        public string Name { get; set; }
-    }
-    public class LiteModelBase
-    { 
-        [BsonId]
-        public ObjectId Id { get; set; }
-        public DateTime AddTime { get; set; }
-        public long AddTimeLong { get; set; }
-    }
-
-    abstract public class LiteBase<T> where T : LiteModelBase
-    {
-        /// <summary>
-        /// 实现返回一个数据库实例,如new LiteDatabase(@"ChatHistory.db")
-        /// </summary>
-        abstract protected LiteDatabase GetDb { get; } 
-        private string TableName = string.Empty;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="DbPath">数据库位置，如当前目录下"ChatHistory.db"</param>
-        public LiteBase() {
-
-
-            // 获取类型
-            Type type = typeof(T);
-            // 获取LiteTableAttribute属性
-            var attribute = type.GetCustomAttribute<LiteTableAttribute>();
-            if (attribute != null) {
-                TableName = attribute.Name;
-            }
-            else
-            {
-                TableName = this.GetType().Name;
-            }
-        }
-        private string GetMillisecond()
-        {
-            DateTime dt_s = DateTime.Now;
-            DateTime dt_end = new DateTime(dt_s.Year, dt_s.Month, dt_s.Day, dt_s.Hour, dt_s.Minute, dt_s.Second, dt_s.Millisecond);
-            DateTime dt_begin = new DateTime(2013, 1, 1, 0, 0, 0, 0);
-            return dt_end.Subtract(dt_begin).TotalMilliseconds.ToString();
-        }
         public ObjectId Add(T model)
         {
             using (var db = GetDb)
             {
-                model.Id = ObjectId.NewObjectId();
-                model.AddTime = DateTime.Now; 
+                //model.Id = ObjectId.NewObjectId();
+                model.AddTime = DateTime.Now;
                 model.AddTimeLong = long.Parse(GetMillisecond());
                 var collection = db.GetCollection<T>(TableName);
                 collection.Insert(model);
                 return model.Id;
             }
-                
+
         }
 
-        public T GetEntity(int id)
+        public T GetEntity(ObjectId id)
         {
             using (var db = GetDb)
             {
                 var collection = db.GetCollection<T>(TableName);
                 return collection.FindById(id);
             }
-               
+
+        }        
+
+        public T GetEntity(string id)
+        {
+            return GetEntity(new ObjectId(id));
         }
+
         public bool Exists(string id)
         {
             return Exists(new ObjectId(id));
@@ -192,6 +144,106 @@ namespace XS.Data2.LiteDBBase
                 return collection.Exists(x => x.Id == id);
             }
         }
+
+        public void Delete(string id)
+        {
+            Delete(new ObjectId(id));
+        }
+        public void Delete(ObjectId id)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                collection.Delete(id);
+            }
+        }
+
+    }
+
+    abstract public class LiteBaseInt<T> : BllLiteBase<T> where T : LiteModelBaseInt
+    {
+        public long Add(T model)
+        {
+            using (var db = GetDb)
+            {
+                //model.Id = ObjectId.NewObjectId();
+                model.AddTime = DateTime.Now;
+                model.AddTimeLong = long.Parse(GetMillisecond());
+                var collection = db.GetCollection<T>(TableName);
+                collection.Insert(model);
+                return model.Id;
+            }
+
+        }
+
+        public T GetEntity(long id)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                return collection.FindById(id);
+            }
+
+        } 
+        public bool Exists(long id)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                // 使用表达式检查是否存在
+                return collection.Exists(x => x.Id == id);
+            }
+        }
+         
+        public void Delete(long id)
+        {
+            using (var db = GetDb)
+            {
+                var collection = db.GetCollection<T>(TableName);
+                collection.Delete(id);
+            }
+        }
+    }
+
+
+    abstract public class BllLiteBase<T> where T : LiteModelBase
+    {
+        /// <summary>
+        /// 实现返回一个数据库实例,如new LiteDatabase(@"ChatHistory.db")
+        /// </summary>
+        abstract protected LiteDatabase GetDb { get; }
+        protected string TableName = string.Empty;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="DbPath">数据库位置，如当前目录下"ChatHistory.db"</param>
+        public BllLiteBase()
+        {
+
+
+            // 获取类型
+            Type type = typeof(T);
+            // 获取LiteTableAttribute属性
+            var attribute = type.GetCustomAttribute<LiteTableAttribute>();
+            if (attribute != null)
+            {
+                TableName = attribute.Name;
+            }
+            else
+            {
+                TableName = this.GetType().Name;
+            }
+        }
+        protected string GetMillisecond()
+        {
+            DateTime dt_s = DateTime.Now;
+            DateTime dt_end = new DateTime(dt_s.Year, dt_s.Month, dt_s.Day, dt_s.Hour, dt_s.Minute, dt_s.Second, dt_s.Millisecond);
+            DateTime dt_begin = new DateTime(2013, 1, 1, 0, 0, 0, 0);
+            return dt_end.Subtract(dt_begin).TotalMilliseconds.ToString();
+        }
+        
+
+        
         /// <summary>
         /// 是否存在某记录
         /// </summary>
@@ -213,6 +265,17 @@ namespace XS.Data2.LiteDBBase
                 var search = BsonExpression.Create(query);
                 return collection.Exists(search);
             }
+        }
+        /// <summary>
+        /// 根据MdWu获取记录
+        /// </summary>
+        public T? GetByMdWu(string mdWu)
+        {
+            return Find($"MdWu = '{mdWu}'").FirstOrDefault();
+        }
+        public bool ExistsMd5(string md5)
+        {
+            return ExistsWhere($"MdWu = '{md5}'");
         }
 
         /// <summary>
@@ -244,31 +307,7 @@ namespace XS.Data2.LiteDBBase
                 return collection.Update(model);
             }
         }
-        public T GetEntity(ObjectId id)
-        {
-            using (var db = GetDb)
-            {
-                var collection = db.GetCollection<T>(TableName);
-                return collection.FindById(id);
-            }
-        }
-
-        public T GetEntity(string id)
-        {
-            return GetEntity(new ObjectId(id));
-        }
-        public void Delete(string id)
-        {
-             Delete(new ObjectId(id));
-        }
-        public void Delete(ObjectId id)
-        {
-            using (var db = GetDb)
-            {
-                var collection = db.GetCollection<T>(TableName);
-                collection.Delete(id);
-            }
-        }
+        
         public void DeleteAll()
         {
             using (var db = GetDb)
@@ -326,7 +365,7 @@ namespace XS.Data2.LiteDBBase
                 }
                 else
                 {
-                    
+
                     var expr = BsonExpression.Create(query);
                     queryable = collection.Query().Where(expr);
                 }
@@ -354,7 +393,7 @@ namespace XS.Data2.LiteDBBase
 
 
 
-        public List<T> FindNews(int Top=100)
+        public List<T> FindNews(int Top = 100)
         {
             using (var db = GetDb)
             {
@@ -389,7 +428,7 @@ namespace XS.Data2.LiteDBBase
         /// <param name="orderBy">用于指定排序字段的表达式</param>
         /// <param name="descending">一个布尔值，指定是否为降序排序（默认为false，即升序）</param>
         /// <returns></returns>
-        public List<T> GetList(Expression<Func<T, bool>> filter = null,Expression<Func<T, object>> orderBy = null,bool descending = true)
+        public List<T> GetList(Expression<Func<T, bool>> filter = null, Expression<Func<T, object>> orderBy = null, bool descending = true)
         {
             using (var db = GetDb)
             {
@@ -404,7 +443,7 @@ namespace XS.Data2.LiteDBBase
                 if (orderBy == null)
                 {
                     orderBy = x => x.AddTimeLong;
-                    
+
                 }
                 query = descending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
 
@@ -458,7 +497,7 @@ namespace XS.Data2.LiteDBBase
         /// <param name="descending">用于指定排序方向（默认为降序）</param>
         /// <returns></returns>
 
-        public List<T> PagedQuery(int pageNumber,int pageSize,Expression<Func<T, bool>> filter = null,Expression<Func<T, object>> orderBy = null,bool descending = true)
+        public List<T> PagedQuery(int pageNumber, int pageSize, Expression<Func<T, bool>> filter = null, Expression<Func<T, object>> orderBy = null, bool descending = true)
         {
             using (var db = GetDb)
             {
